@@ -25,24 +25,27 @@ def main():
 	os.makedirs(build_output_dir, exist_ok=True)
 
 	# Configure
-	cmake_command = f'cmake -B {build_output_dir} -S {os.getcwd()}'
+	cmake_command = f'cmake -B \'{build_output_dir}\' -S \'{os.getcwd()}\''
 	if args.platform == 'osx':
 		cmake_command += ' -G "Xcode"'
 	if args.platform:
 		cmake_command += f' -DPLATFORM:STRING={args.platform}'
 	if args.coverage:
 		cmake_command += ' -DENABLE_COVERAGE=ON'
-  
+
+	print(cmake_command)
 	run_command(cmake_command)
 
 	# Build
 	if args.build:
-		run_command(f'cmake --build {build_output_dir} --config {args.cfg}')
+		print(f'cmake --build \'{build_output_dir}\' --config {args.cfg}')
+		run_command(f'cmake --build \'{build_output_dir}\' --config {args.cfg}')
 	else:
 		exit(0)
 
 	# Test
 	if args.test:
+		print(f'ctest --build-config {args.cfg} --verbose --output-on-failure')
 		run_command(f'ctest --build-config {args.cfg} --verbose --output-on-failure', cwd=build_output_dir)
 	else:
 		exit(0)
@@ -50,7 +53,8 @@ def main():
 	# Code Coverage
 	if args.coverage:
 		# Prepare coverage data
-		run_command(f'cmake --build {build_output_dir} --target cov', cwd=build_output_dir)
+		print(f'cmake --build \'{build_output_dir}\' --target cov')
+		run_command(f'cmake --build \'{build_output_dir}\' --target cov', cwd=build_output_dir)
 
 	# Package Build Artifacts
 	package_dir = os.path.join(build_output_dir, 'package')
@@ -62,11 +66,14 @@ def main():
 
 	# Print Package Contents
 	if args.platform.startswith('win'):
+		print(f'dir {package_dir}')
 		run_command(f'dir {package_dir}', shell=True)
 	else:
+		print(f'ls -la {package_dir}')
 		run_command(f'ls -la {package_dir}', shell=True)
 
 	if args.platform == 'osx':
+		print(f'lipo -info {package_dir}/*GameAnalytics.*')
 		run_command(f'lipo -info {package_dir}/*GameAnalytics.*')
 
 if __name__ == "__main__":
